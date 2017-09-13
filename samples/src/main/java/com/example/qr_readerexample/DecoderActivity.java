@@ -28,12 +28,10 @@ public class DecoderActivity extends AppCompatActivity
   private static final int MY_PERMISSION_REQUEST_CAMERA = 0;
 
   private static final String[] DUMMY_CREDENTIALS = new String[]{
-          "juan@somedomain.com.com:123456", "paco@somedomain.com:987654"
+          "juan@somedomain.com:123456", "paco@somedomain.com:987654"
   };
 
   private final String MSG_INVALID_QR = "Código QR inválido";
-
-  private final String MSG_SUCCESSFULL_LOGIN = "Login exitoso";
 
   private final String TAG = "DECODER_ACTIVITY";
 
@@ -112,7 +110,6 @@ public class DecoderActivity extends AppCompatActivity
   // "points" : points where QR control points are placed
   @Override public void onQRCodeRead(String text, PointF[] points) {
     int indexOfColon = text.indexOf(':');
-
     if (indexOfColon >= 0) {
       String[] textPieces = text.split(":");
 
@@ -124,11 +121,11 @@ public class DecoderActivity extends AppCompatActivity
       }
 
       if( textPieces[0].equals(uEmail) && textPieces[1].equals(uPassword) ) {
-        //Intent mainIntent = new Intent(DecoderActivity.this, MainActivity.class);
-        //mainIntent.putExtra("EXTRA_USER_EMAIL", uEmail);
-        //DecoderActivity.this.startActivity(mainIntent);
-        //finish();
-        resultTextView.setText(MSG_SUCCESSFULL_LOGIN);
+        Intent welcomeIntent = new Intent(DecoderActivity.this, WelcomeActivity.class);
+        welcomeIntent.setFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);
+        welcomeIntent.putExtra("EXTRA_USER_EMAIL", uEmail);
+        DecoderActivity.this.startActivity(welcomeIntent);
+        finish();
       }
       else {
         resultTextView.setText(MSG_INVALID_QR);
