@@ -1,6 +1,9 @@
 package com.example.qr_readerexample;
 
 import android.Manifest;
+import android.content.Context;
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.PointF;
 import android.os.Bundle;
@@ -8,6 +11,7 @@ import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CheckBox;
@@ -15,11 +19,23 @@ import android.widget.CompoundButton;
 import android.widget.TextView;
 import com.dlazaro66.qrcodereaderview.QRCodeReaderView;
 import com.dlazaro66.qrcodereaderview.QRCodeReaderView.OnQRCodeReadListener;
+import android.content.SharedPreferences.Editor;
+import android.widget.Toast;
 
 public class DecoderActivity extends AppCompatActivity
     implements ActivityCompat.OnRequestPermissionsResultCallback, OnQRCodeReadListener {
 
   private static final int MY_PERMISSION_REQUEST_CAMERA = 0;
+
+  private static final String[] DUMMY_CREDENTIALS = new String[]{
+          "juan@somedomain.com.com:123456", "paco@somedomain.com:987654"
+  };
+
+  private final String MSG_INVALID_QR = "Código QR inválido";
+
+  private final String MSG_SUCCESSFULL_LOGIN = "Login exitoso";
+
+  private final String TAG = "DECODER_ACTIVITY";
 
   private ViewGroup mainLayout;
 
@@ -28,6 +44,12 @@ public class DecoderActivity extends AppCompatActivity
   private CheckBox flashlightCheckBox;
   private CheckBox enableDecodingCheckBox;
   private PointsOverlayView pointsOverlayView;
+
+  private SharedPreferences sharedPreferences;
+  private Editor editor;
+
+  private String uEmail;
+  private String uPassword;
 
   @Override protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
@@ -42,6 +64,16 @@ public class DecoderActivity extends AppCompatActivity
     } else {
       requestCameraPermission();
     }
+    // Sólo para demostración se asume que ya hay un usuario registrado en el dispositivo y sus datos se almacenan en SharedPreferences
+    sharedPreferences = getApplicationContext().getSharedPreferences("DB", 0);
+    editor = sharedPreferences.edit();
+    int randomIndex = (int) Math.round( Math.random() );
+    String credential = DUMMY_CREDENTIALS[randomIndex];
+    Log.d(TAG, "DUMMY CREDENTIAL " + credential);
+    String[] pieces = credential.split(":");
+    editor.putString("Email", pieces[0]);
+    editor.putString("Password", pieces[1]);
+    editor.commit();
   }
 
   @Override protected void onResume() {
@@ -79,7 +111,32 @@ public class DecoderActivity extends AppCompatActivity
   // "text" : the text encoded in QR
   // "points" : points where QR control points are placed
   @Override public void onQRCodeRead(String text, PointF[] points) {
-    resultTextView.setText(text);
+    int indexOfColon = text.indexOf(':');
+
+    if (indexOfColon >= 0) {
+      String[] textPieces = text.split(":");
+
+      if (sharedPreferences.contains("Email"))  {
+        uEmail = sharedPreferences.getString("Email", "");
+      }
+      if (sharedPreferences.contains("Password")) {
+        uPassword = sharedPreferences.getString("Password", "");
+      }
+
+      if( textPieces[0].equals(uEmail) && textPieces[1].equals(uPassword) ) {
+        //Intent mainIntent = new Intent(DecoderActivity.this, MainActivity.class);
+        //mainIntent.putExtra("EXTRA_USER_EMAIL", uEmail);
+        //DecoderActivity.this.startActivity(mainIntent);
+        //finish();
+        resultTextView.setText(MSG_SUCCESSFULL_LOGIN);
+      }
+      else {
+        resultTextView.setText(MSG_INVALID_QR);
+      }
+    }
+    else {
+      resultTextView.setText(MSG_INVALID_QR);
+    }
     pointsOverlayView.setPoints(points);
   }
 
